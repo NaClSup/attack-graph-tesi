@@ -1,0 +1,411 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1><h2 id='mytitle' style='color:#000000;text-align:center'>Attack Graph - Compromissione Ring 0 di Windows</h2><style>h2:not(#mytitle){display:none}</style></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #0d1117;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    
+<style>
+  html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#0d1117; }
+  body { position:relative; }
+  #mynetwork { width:100% !important; height:100vh !important; border:0 !important; }
+  #mytitle { position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:20;
+             margin:0; color:#e6edf3 !important; font:600 18px 'Segoe UI',Arial,sans-serif;
+             pointer-events:none; white-space:nowrap; }
+  #graph-toolbar { position:fixed; left:16px; bottom:16px; z-index:1000; display:flex; gap:8px; }
+  #graph-toolbar button { padding:8px 11px; cursor:pointer; background:#21262d; color:#e6edf3;
+                          border:1px solid #30363d; border-radius:7px; box-shadow:0 2px 8px #0008; }
+  #graph-toolbar button:hover { background:#30363d; }
+  body.clean-view #path-panel, body.clean-view #mytitle,
+  body.clean-view div.vis-navigation { display:none !important; }
+  body.clean-view #graph-toolbar button:not(:nth-child(3)) { display:none; }
+  body.clean-view #graph-toolbar { opacity:.25; }
+  body.clean-view #graph-toolbar:hover { opacity:1; }
+  body.exporting #path-panel, body.exporting #mytitle,
+  body.exporting #graph-toolbar, body.exporting div.vis-navigation { display:none !important; }
+  div.vis-network div.vis-navigation div.vis-button { filter:invert(1); opacity:.75; }
+  @media (max-width:700px) {
+    #mytitle { font-size:14px; max-width:70vw; overflow:hidden; text-overflow:ellipsis; }
+    #path-panel { top:48px !important; right:8px !important; }
+    #graph-toolbar { left:8px; bottom:8px; }
+  }
+</style>
+
+</head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": {"background": "#A91BCCB5", "border": "#6B09BB", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "S0", "label": "ESTERNO\n(Attaccante fuori)", "shape": "triangle", "size": 35, "stageIndex": 0, "title": "ESTERNO\n(Attaccante fuori)\nStage 0: Initial Access\n", "x": -750, "y": 0}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "A0a", "label": "Phishing/Spear-phishing\n[T1566]", "shape": "box", "size": 28, "stageIndex": 0, "title": "Phishing/Spear-phishing\n[T1566]\nStage 0: Initial Access\n\nEmail malevola. Vettore APT piu\u0027 comune.", "x": -450, "y": 0}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "A0b", "label": "Exploit Applicazione\nPubblica\n[T1190] CVE-2021-44228", "shape": "box", "size": 28, "stageIndex": 0, "title": "Exploit Applicazione\nPubblica\n[T1190] CVE-2021-44228\nStage 0: Initial Access\nCVSS: 9.8\n\nLog4Shell. RCE da Internet. CVSS 9.8 NVD.", "x": -150, "y": 0}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "A0c", "label": "Credenziali Rubate\n[T1078]", "shape": "box", "size": 28, "stageIndex": 0, "title": "Credenziali Rubate\n[T1078]\nStage 0: Initial Access\n\nAccount validi acquistati o esfiltrati.", "x": 150, "y": 0}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "A0d", "label": "Supply Chain Compromise\n[T1195]", "shape": "box", "size": 28, "stageIndex": 0, "title": "Supply Chain Compromise\n[T1195]\nStage 0: Initial Access\n\nPacchetto/update software compromesso.", "x": 450, "y": 0}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N0", "label": "UserAccount.userRights\n(Ring 3 \u2014 foothold)", "shape": "box", "size": 28, "stageIndex": 0, "title": "UserAccount.userRights\n(Ring 3 \u2014 foothold)\nStage 0: Initial Access\n\nPunto di ingresso al sistema.", "x": 750, "y": 0}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "T1a", "label": "Token Impersonation\n[T1134] SeDebugPrivilege", "shape": "box", "size": 28, "stageIndex": 1, "title": "Token Impersonation\n[T1134] SeDebugPrivilege\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.8\n\nCVE-2021-1732 CVSS 7.8. Token SYSTEM da processo\nprivilegiato.", "x": -1350, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "T1b", "label": "Potato Attack\n[T1134.001] SeImpersonate", "shape": "box", "size": 28, "stageIndex": 1, "title": "Potato Attack\n[T1134.001] SeImpersonate\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.0\n\nPrintSpoofer, JuicyPotato. CVSS-equiv 7.0.", "x": -1050, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "T1c", "label": "AlwaysInstallElevated\n[T1548.002]", "shape": "box", "size": 28, "stageIndex": 1, "title": "AlwaysInstallElevated\n[T1548.002]\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.8\n\nPolicy mal configurata: MSI as SYSTEM. CVSS-equiv\n7.8.", "x": -750, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "T1d", "label": "Weak Service Permissions\n[T1574.010]", "shape": "box", "size": 28, "stageIndex": 1, "title": "Weak Service Permissions\n[T1574.010]\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.3\n\nSostituzione binario servizio. CVSS-equiv 7.3.", "x": -450, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1a", "label": "BYOVD CVE-2019-16098\nMSI RTCore64.sys", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD CVE-2019-16098\nMSI RTCore64.sys\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.8\n\nCVSS 7.8 NVD. R/W arbitrario kernel mem. BlackByte\nransomware.", "x": -150, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1b", "label": "BYOVD CVE-2021-21551\nDell DBUtil_2_3.sys", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD CVE-2021-21551\nDell DBUtil_2_3.sys\nStage 1: Escalation \u2192 Ring0\nCVSS: 8.8\n\nCVSS 8.8 NVD. 100M+ device Dell. Lazarus APT 2021.\nCISA KEV.", "x": 150, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1c", "label": "BYOVD CVE-2015-2291\nIntel IQVW64.sys", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD CVE-2015-2291\nIntel IQVW64.sys\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.8\n\nCVSS 7.8 NVD. CISA KEV. Scattered Spider\n2022-2023.", "x": 450, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1d", "label": "BYOVD CVE-2018-19320\nGigabyte gdrv.sys", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD CVE-2018-19320\nGigabyte gdrv.sys\nStage 1: Escalation \u2192 Ring0\nCVSS: 8.8\n\nCVSS 8.8 NVD. R/W fisica mem. RobbinHood\nransomware 2019.", "x": 750, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1e", "label": "BYOVD CVE-2022-3699\nLenovo LDD driver", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD CVE-2022-3699\nLenovo LDD driver\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.8\n\nCVSS 7.8 NVD. CWE-787 OOB write. Metasploit module\ndisponibile.", "x": 1050, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1f", "label": "BYOVD CVE-2024-1853\nZemana zamguard64.sys", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD CVE-2024-1853\nZemana zamguard64.sys\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.8\n\nCVSS 7.8 NVD. Terminator EDR killer, Qilin\nransomware 2024.", "x": 1350, "y": 295}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1g", "label": "BYOVD mhyprot2.sys\nGenshin Impact anti-cheat", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD mhyprot2.sys\nGenshin Impact anti-cheat\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.8\n\nStima 7.8. Firmato MS. No CVE: abuso funzionalita\u0027\nlegittima.", "x": -1350, "y": 420}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1h", "label": "BYOVD procexp.sys\nSysinternals (AuKill)", "shape": "box", "size": 28, "stageIndex": 1, "title": "BYOVD procexp.sys\nSysinternals (AuKill)\nStage 1: Escalation \u2192 Ring0\nCVSS: 6.5\n\nStima 6.5. No CVE: tool legittimo MS. AuKill 2023.", "x": -1050, "y": 420}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1i", "label": "Driver OEM gia\u0027 presente\n(anti-cheat/utility HW)", "shape": "box", "size": 28, "stageIndex": 1, "title": "Driver OEM gia\u0027 presente\n(anti-cheat/utility HW)\nStage 1: Escalation \u2192 Ring0\nCVSS: 7.0\n\nStima 7.0. Es. Vanguard, altri anti-cheat. Nessun\ndropping.", "x": -750, "y": 420}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1j", "label": "Exploit Kernel diretto\nCVE-2021-34527\nPrintNightmare", "shape": "box", "size": 28, "stageIndex": 1, "title": "Exploit Kernel diretto\nCVE-2021-34527\nPrintNightmare\nStage 1: Escalation \u2192 Ring0\nCVSS: 8.8\n\nCVSS 8.8 NVD. Windows Print Spooler RCE+LPE.", "x": -450, "y": 420}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1k", "label": "Certificato di firma\nrubato/compromesso", "shape": "box", "size": 28, "stageIndex": 1, "title": "Certificato di firma\nrubato/compromesso\nStage 1: Escalation \u2192 Ring0\nCVSS: 6.5\n\nStima 6.5. Driver malevolo firmato con cert.\nrubato (Winnti APT).", "x": -150, "y": 420}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1l", "label": "Bootkit CVE-2023-24932\nBypass Secure Boot", "shape": "box", "size": 28, "stageIndex": 1, "title": "Bootkit CVE-2023-24932\nBypass Secure Boot\nStage 1: Escalation \u2192 Ring0\nCVSS: 6.7\n\nCVSS 6.7 NVD. BlackLotus. Primo bootkit su Win11\npatchato.", "x": 150, "y": 420}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1m", "label": "Exploit Hypervisor\nRing -1 (0-day)", "shape": "box", "size": 28, "stageIndex": 1, "title": "Exploit Hypervisor\nRing -1 (0-day)\nStage 1: Escalation \u2192 Ring0\nCVSS: 9.0\n\nStima 9.0. Rarissimo. Privilegio superiore al\nKernel stesso.", "x": 450, "y": 420}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N1n", "label": "Attacco DMA fisico\nThunderbolt/PCIe", "shape": "box", "size": 28, "stageIndex": 1, "title": "Attacco DMA fisico\nThunderbolt/PCIe\nStage 1: Escalation \u2192 Ring0\nCVSS: 6.8\n\nStima 6.8. Accesso fisico alla macchina richiesto.", "x": 750, "y": 420}, {"color": {"background": "#DC2626", "border": "#991B1B", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "F_DSE", "label": "GATE: DSE\nDriver Signature\nEnforcement", "shape": "diamond", "size": 22, "stageIndex": 1, "title": "GATE: DSE\nDriver Signature\nEnforcement\nStage 1: Escalation \u2192 Ring0\n\nVerifica firma MS. Blocca driver non firmati o in\nblocklist.", "x": 1050, "y": 420}, {"color": {"background": "#DC2626", "border": "#991B1B", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "F_WDAC", "label": "GATE: WDAC/Blocklist MS\nDriver vulnerability\nblocklist", "shape": "diamond", "size": 22, "stageIndex": 1, "title": "GATE: WDAC/Blocklist MS\nDriver vulnerability\nblocklist\nStage 1: Escalation \u2192 Ring0\n\nMicrosoft blocklist: 300+ driver BYOVD noti\nbloccati.", "x": 1350, "y": 420}, {"color": {"background": "#DC2626", "border": "#991B1B", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "F_IOMMU", "label": "GATE: IOMMU\nKernel DMA Protection", "shape": "diamond", "size": 22, "stageIndex": 1, "title": "GATE: IOMMU\nKernel DMA Protection\nStage 1: Escalation \u2192 Ring0\n\nBlocca DMA via PCIe/Thunderbolt se VBS abilitato.", "x": 0, "y": 545}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N2", "label": "Ring0.CodeExecution\n(Ring3 \u2192 Ring0)", "shape": "box", "size": 28, "stageIndex": 2, "title": "Ring0.CodeExecution\n(Ring3 \u2192 Ring0)\nStage 2: Ring0 + Gates\n\nTransizione privilegiata. Kernel mode raggiunto.", "x": -300, "y": 840}, {"color": {"background": "#DC2626", "border": "#991B1B", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "F_HVCI", "label": "GATE: HVCI\nHV-Protected Code\nIntegrity", "shape": "diamond", "size": 22, "stageIndex": 2, "title": "GATE: HVCI\nHV-Protected Code\nIntegrity\nStage 2: Ring0 + Gates\n\nBlocca codice Kernel non firmato anche post-\ncaricamento.", "x": 0, "y": 840}, {"color": {"background": "#DC2626", "border": "#991B1B", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "F_PG", "label": "GATE: PatchGuard\nKernel Patch Protection \u2192\nBSOD", "shape": "diamond", "size": 22, "stageIndex": 2, "title": "GATE: PatchGuard\nKernel Patch Protection \u2192\nBSOD\nStage 2: Ring0 + Gates\n\nVerifica SSDT, IDT, GDT, LSTAR. BSOD immediato se\nalterati.", "x": 300, "y": 840}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3a", "label": "DKOM Process Hidden\n[T1014]", "shape": "box", "size": 28, "stageIndex": 3, "title": "DKOM Process Hidden\n[T1014]\nStage 3: Consolidamento\n\nRimozione da ActiveProcessLinks. Invisibile a Task\nManager e EDR user-mode.", "x": -1350, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3b", "label": "SSDT Hooking\n[T1014]", "shape": "box", "size": 28, "stageIndex": 3, "title": "SSDT Hooking\n[T1014]\nStage 3: Consolidamento\n\nIntercettazione syscall. Rischio PatchGuard su\nstrutture vigilate.", "x": -1050, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3c", "label": "ETW Patching\nEtwEventWrite\u2192RET\n[T1562.006]", "shape": "box", "size": 28, "stageIndex": 3, "title": "ETW Patching\nEtwEventWrite\u2192RET\n[T1562.006]\nStage 3: Consolidamento\n\nPatch ETW in memoria. Telemetria cieca. Non\nvigilato da PatchGuard.", "x": -750, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3d", "label": "Rimozione Kernel\nCallbacks EDR\n[T1562.001]", "shape": "box", "size": 28, "stageIndex": 3, "title": "Rimozione Kernel\nCallbacks EDR\n[T1562.001]\nStage 3: Consolidamento\n\nRimuove PsSetLoadImageNotifyRoutine. EDR senza\nnotifiche.", "x": -450, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3e", "label": "IRP Hook minifilter EDR\n[T1562]", "shape": "box", "size": 28, "stageIndex": 3, "title": "IRP Hook minifilter EDR\n[T1562]\nStage 3: Consolidamento\n\nIntercettazione I/O del driver minifilter\ndell\u0027EDR.", "x": -150, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3f", "label": "PPL Bypass\n[T1562]", "shape": "box", "size": 28, "stageIndex": 3, "title": "PPL Bypass\n[T1562]\nStage 3: Consolidamento\n\nRevoca protezione PPL del processo AV/EDR.", "x": 150, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3g", "label": "Kill diretto EDR da\nKernel\n[T1562.001]", "shape": "box", "size": 28, "stageIndex": 3, "title": "Kill diretto EDR da\nKernel\n[T1562.001]\nStage 3: Consolidamento\n\nTerminazione kernel del processo EDR, invisibile\nalle API Windows.", "x": 450, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3h", "label": "Rootkit Persistenza\n[T1547.006]", "shape": "box", "size": 28, "stageIndex": 3, "title": "Rootkit Persistenza\n[T1547.006]\nStage 3: Consolidamento\n\nDriver malevolo a avvio automatico nel registry.", "x": 750, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3i", "label": "Bootkit Post-Ring0\n[T1542.003]", "shape": "box", "size": 28, "stageIndex": 3, "title": "Bootkit Post-Ring0\n[T1542.003]\nStage 3: Consolidamento\n\nScrittura MBR/VBR/UEFI per persistenza pre-OS.", "x": 1050, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3j", "label": "Credential Dump Kernel\n[T1003.001] LSASS", "shape": "box", "size": 28, "stageIndex": 3, "title": "Credential Dump Kernel\n[T1003.001] LSASS\nStage 3: Consolidamento\n\nLettura diretta mem LSASS da Kernel. Invisibile\nagli EDR.", "x": 1350, "y": 1135}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3k", "label": "Network Connection Hiding\n[T1070]", "shape": "box", "size": 28, "stageIndex": 3, "title": "Network Connection Hiding\n[T1070]\nStage 3: Consolidamento\n\nRimozione connessioni da strutture Kernel:\ninvisibili a netstat.", "x": -300, "y": 1260}, {"color": {"background": "#2563EB", "border": "#1D4ED8", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "N3l", "label": "Registry Key Hiding\n[T1112]", "shape": "box", "size": 28, "stageIndex": 3, "title": "Registry Key Hiding\n[T1112]\nStage 3: Consolidamento\n\nNascondere chiavi registry via strutture HIVE\nKernel.", "x": 0, "y": 1260}, {"color": {"background": "#DC2626", "border": "#991B1B", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "F_EDR", "label": "GATE: EDR Behavioural\nDetection", "shape": "diamond", "size": 22, "stageIndex": 3, "title": "GATE: EDR Behavioural\nDetection\nStage 3: Consolidamento\n\nRilevamento comportamentale prima che il goal sia\nraggiunto.", "x": 300, "y": 1260}, {"color": {"background": "#16A34A", "border": "#14532D", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "G1", "label": "EDR Blinded\n[GOAL PRINCIPALE]", "shape": "box", "size": 40, "stageIndex": 4, "title": "EDR Blinded\n[GOAL PRINCIPALE]\nStage 4: Obiettivi\n\nTelemetria difensiva completamente disabilitata.", "x": -450, "y": 1555}, {"color": {"background": "#16A34A", "border": "#14532D", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "G2", "label": "Credential Theft\n[GOAL]", "shape": "box", "size": 40, "stageIndex": 4, "title": "Credential Theft\n[GOAL]\nStage 4: Obiettivi\n\nHash NTLM, ticket Kerberos, credenziali in chiaro.", "x": -150, "y": 1555}, {"color": {"background": "#16A34A", "border": "#14532D", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "G3", "label": "Persistenza Totale\n[GOAL]", "shape": "box", "size": 40, "stageIndex": 4, "title": "Persistenza Totale\n[GOAL]\nStage 4: Obiettivi\n\nRootkit/bootkit: sopravvive a reboot e\nreinstallazione.", "x": 150, "y": 1555}, {"color": {"background": "#16A34A", "border": "#14532D", "highlight": {"background": "#ffd700", "border": "#b45309"}}, "fixed": true, "font": {"color": "#e6edf3"}, "id": "G4", "label": "Ransomware / Impact\n[GOAL]", "shape": "box", "size": 40, "stageIndex": 4, "title": "Ransomware / Impact\n[GOAL]\nStage 4: Obiettivi\n\nCifratura asset con EDR cieco: nessun alert\ndurante deploy.", "x": 450, "y": 1555}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "S0", "label": "4.0", "title": "Peso: 4.0", "to": "A0a", "width": 2.5}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "S0", "label": "0.2", "title": "Peso: \u003cb\u003e0.2\u003c/b\u003e\u003cbr\u003e\u003ci\u003eCVE-2021-44228 CVSS 9.8\u003c/i\u003e", "to": "A0b", "width": 3.45}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "S0", "label": "3.5", "title": "Peso: 3.5", "to": "A0c", "width": 2.625}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "S0", "label": "6.0", "title": "Peso: 6.0", "to": "A0d", "width": 2.0}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "A0a", "label": "0.5", "title": "Peso: 0.5", "to": "N0", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "A0b", "label": "0.5", "title": "Peso: 0.5", "to": "N0", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "A0c", "label": "0.5", "title": "Peso: 0.5", "to": "N0", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "A0d", "label": "0.5", "title": "Peso: 0.5", "to": "N0", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.2", "title": "Peso: \u003cb\u003e2.2\u003c/b\u003e\u003cbr\u003e\u003ci\u003eCVE-2021-1732 CVSS 7.8\u003c/i\u003e", "to": "T1a", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "3.0", "title": "Peso: 3.0", "to": "T1b", "width": 2.75}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.2", "title": "Peso: 2.2", "to": "T1c", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.7", "title": "Peso: 2.7", "to": "T1d", "width": 2.825}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.2", "title": "Peso: 2.2", "to": "N1a", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "1.2", "title": "Peso: 1.2", "to": "N1b", "width": 3.2}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.2", "title": "Peso: 2.2", "to": "N1c", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "1.2", "title": "Peso: 1.2", "to": "N1d", "width": 3.2}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.2", "title": "Peso: 2.2", "to": "N1e", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.2", "title": "Peso: 2.2", "to": "N1f", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "2.2", "title": "Peso: 2.2", "to": "N1g", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "3.5", "title": "Peso: 3.5", "to": "N1h", "width": 2.625}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "3.0", "title": "Peso: 3.0", "to": "N1i", "width": 2.75}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "1.2", "title": "Peso: 1.2", "to": "N1j", "width": 3.2}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "3.5", "title": "Peso: 3.5", "to": "N1k", "width": 2.625}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "3.3", "title": "Peso: 3.3", "to": "N1l", "width": 2.675}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "1.0", "title": "Peso: 1.0", "to": "N1m", "width": 3.25}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N0", "label": "3.2", "title": "Peso: 3.2", "to": "N1n", "width": 2.7}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "T1a", "label": "0.1", "title": "Peso: 0.1", "to": "N0", "width": 3.475}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "T1b", "label": "0.1", "title": "Peso: 0.1", "to": "N0", "width": 3.475}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "T1c", "label": "0.1", "title": "Peso: 0.1", "to": "N0", "width": 3.475}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "T1d", "label": "0.1", "title": "Peso: 0.1", "to": "N0", "width": 3.475}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1a", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1a", "label": "0.3", "title": "Peso: 0.3", "to": "F_WDAC", "width": 3.425}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1b", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1c", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1c", "label": "0.3", "title": "Peso: 0.3", "to": "F_WDAC", "width": 3.425}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1d", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1d", "label": "0.3", "title": "Peso: 0.3", "to": "F_WDAC", "width": 3.425}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1e", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1f", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1g", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1h", "label": "0.2", "title": "Peso: 0.2", "to": "F_DSE", "width": 3.45}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1i", "label": "0.5", "title": "Peso: 0.5", "to": "F_DSE", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1j", "label": "1.0", "title": "Peso: 1.0", "to": "N2", "width": 3.25}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1k", "label": "1.0", "title": "Peso: 1.0", "to": "N2", "width": 3.25}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1l", "label": "0.5", "title": "Peso: 0.5", "to": "N2", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1m", "label": "0.5", "title": "Peso: 0.5", "to": "N2", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N1n", "label": "0.5", "title": "Peso: 0.5", "to": "F_IOMMU", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "F_DSE", "label": "1.0", "title": "Peso: 1.0", "to": "N2", "width": 3.25}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "F_WDAC", "label": "3.0", "title": "Peso: 3.0", "to": "N2", "width": 2.75}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "F_IOMMU", "label": "3.0", "title": "Peso: 3.0", "to": "N2", "width": 2.75}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "0.5", "title": "Peso: 0.5", "to": "F_HVCI", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "1.5", "title": "Peso: 1.5", "to": "N3a", "width": 3.125}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "1.5", "title": "Peso: 1.5", "to": "N3b", "width": 3.125}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "1.2", "title": "Peso: 1.2", "to": "N3c", "width": 3.2}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "1.8", "title": "Peso: 1.8", "to": "N3d", "width": 3.05}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "2.0", "title": "Peso: 2.0", "to": "N3e", "width": 3.0}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "2.2", "title": "Peso: 2.2", "to": "N3f", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "1.8", "title": "Peso: 1.8", "to": "N3g", "width": 3.05}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "2.5", "title": "Peso: 2.5", "to": "N3h", "width": 2.875}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "3.0", "title": "Peso: 3.0", "to": "N3i", "width": 2.75}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "1.8", "title": "Peso: 1.8", "to": "N3j", "width": 3.05}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "2.0", "title": "Peso: 2.0", "to": "N3k", "width": 3.0}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N2", "label": "2.2", "title": "Peso: 2.2", "to": "N3l", "width": 2.95}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "F_HVCI", "label": "3.5", "title": "Peso: 3.5", "to": "N3b", "width": 2.625}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "F_HVCI", "label": "3.5", "title": "Peso: 3.5", "to": "N3c", "width": 2.625}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "F_PG", "label": "6.0", "title": "Peso: 6.0", "to": "G1", "width": 2.0}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3a", "label": "1.0", "title": "Peso: 1.0", "to": "G2", "width": 3.25}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3b", "label": "0.4", "title": "Peso: 0.4", "to": "F_PG", "width": 3.4}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3c", "label": "0.5", "title": "Peso: 0.5", "to": "G1", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3d", "label": "0.4", "title": "Peso: 0.4", "to": "F_EDR", "width": 3.4}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3d", "label": "0.5", "title": "Peso: 0.5", "to": "G1", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3e", "label": "0.5", "title": "Peso: 0.5", "to": "F_EDR", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3e", "label": "0.5", "title": "Peso: 0.5", "to": "G1", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3f", "label": "0.5", "title": "Peso: 0.5", "to": "G1", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3g", "label": "0.5", "title": "Peso: 0.5", "to": "G1", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3h", "label": "0.5", "title": "Peso: 0.5", "to": "G3", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3i", "label": "0.5", "title": "Peso: 0.5", "to": "G3", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "N3j", "label": "0.5", "title": "Peso: 0.5", "to": "G2", "width": 3.375}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "F_EDR", "label": "5.0", "title": "Peso: 5.0", "to": "G1", "width": 2.25}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "G1", "label": "1.0", "title": "Peso: 1.0", "to": "G4", "width": 3.25}, {"arrows": "to", "color": {"color": "#6B7280", "highlight": "#FBBF24", "opacity": 0.24}, "from": "G2", "label": "1.5", "title": "Peso: 1.5", "to": "G4", "width": 3.125}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"nodes": {"shape": "box", "margin": 14, "font": {"size": 22, "face": "SegoeUI,Tahoma,sans-serif", "color": "#ffffff", "bold": true}}, "layout": {"hierarchical": {"enabled": false}}, "physics": {"enabled": false}, "edges": {"arrows": {"to": {"enabled": true, "scaleFactor": 0.7}}, "font": {"size": 0, "color": "#9ca3af", "strokeWidth": 0}, "smooth": {"type": "cubicBezier", "forceDirection": "vertical", "roundness": 0.32}}, "interaction": {"hover": true, "tooltipDelay": 120, "zoomView": true, "dragView": true, "navigationButtons": true, "keyboard": {"enabled": true, "bindToWindow": false}}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  window.network = network; return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<div id="path-panel" style="
+     position:fixed; top:64px; right:16px; width:min(340px, calc(100vw - 32px));
+     max-height:calc(100vh - 80px);
+     overflow-y:auto; background:#161b22; color:#e6edf3; border:1px solid #30363d;
+     border-radius:10px; padding:12px; font-family:'Segoe UI',Arial,sans-serif;
+     font-size:13px; z-index:1000; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+    <strong style="font-size:14px;">Evidenzia percorso</strong>
+    <button onclick="togglePathPanel(this)" aria-label="Riduci pannello" title="Riduci pannello"
+      style="cursor:pointer;background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:5px;padding:2px 8px;">−</button>
+  </div>
+  <div id="path-panel-content">
+  <div style="font-size:11px; color:#8b949e; margin-bottom:8px;">
+    Prima i percorsi riusciti (costo crescente), poi i falliti (costo crescente).
+    Clicca per evidenziare.
+  </div>
+  <button onclick="resetHighlight()" style="
+     width:100%; margin-bottom:8px; padding:6px; cursor:pointer;
+     background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:6px;">
+    Mostra tutto (reset)
+  </button>
+  <div id="path-list"></div>
+  </div>
+</div>
+
+<div id="graph-toolbar">
+  <button onclick="fitAll()" title="Mostra l'intero grafo">Centra tutto</button>
+  <button onclick="readableView()" title="Ingrandisce il grafo mantenendo la navigazione libera">Vista leggibile</button>
+  <button onclick="toggleCleanView(this)" title="Nasconde i controlli per uno screenshot pulito">Modalità screenshot</button>
+  <button onclick="exportGraphPng()" title="Esporta il grafo completo nel formato ideale per PowerPoint">Esporta PNG 4K per PPT</button>
+</div>
+
+<script type="text/javascript">
+  var PATHS = [{"name": "OTTIMO · EDR Blinded", "nodes": ["S0", "A0b", "N0", "N1m", "N2", "N3c", "G1"], "cost": 3.9, "status": "RIUSCITO"}, {"name": "OTTIMO · Credential Theft", "nodes": ["S0", "A0b", "N0", "N1m", "N2", "N3j", "G2"], "cost": 4.5, "status": "RIUSCITO"}, {"name": "OTTIMO · Ransomware", "nodes": ["S0", "A0b", "N0", "N1m", "N2", "N3c", "G1", "G4"], "cost": 4.9, "status": "RIUSCITO"}, {"name": "OTTIMO · Persistenza", "nodes": ["S0", "A0b", "N0", "N1m", "N2", "N3h", "G3"], "cost": 5.2, "status": "RIUSCITO"}, {"name": "PATH 2 · Exploit pubblico -> BYOVD Gigabyte (CVSS 8.8) -> Kill diretto EDR", "nodes": ["S0", "A0b", "N0", "N1d", "F_DSE", "N2", "N3g", "G1"], "cost": 5.7, "status": "RIUSCITO"}, {"name": "PATH 1 · Phishing -> BYOVD Dell (CVSS 8.8) -> ETW patch -> EDR Blinded", "nodes": ["S0", "A0a", "N0", "N1b", "F_DSE", "N2", "N3c", "G1"], "cost": 8.9, "status": "RIUSCITO"}, {"name": "PATH 10 · EDR Blinded -> Ransomware (concatenato)", "nodes": ["S0", "A0a", "N0", "N1b", "F_DSE", "N2", "N3c", "G1", "G4"], "cost": 9.9, "status": "RIUSCITO"}, {"name": "PATH 3 · Credenziali rubate -> Driver OEM presente -> ETW + Credential Dump", "nodes": ["S0", "A0c", "N0", "N1i", "F_DSE", "N2", "N3c", "G1"], "cost": 10.2, "status": "RIUSCITO"}, {"name": "PATH 4 · Phishing -> Bootkit Secure Boot -> Persistenza totale", "nodes": ["S0", "A0a", "N0", "N1l", "N2", "N3h", "G3"], "cost": 11.3, "status": "RIUSCITO"}, {"name": "PATH 9 · Supply chain -> PrintNightmare -> Credential dump -> Ransomware", "nodes": ["S0", "A0d", "N0", "N1j", "N2", "N3j", "G2", "G4"], "cost": 12.5, "status": "RIUSCITO"}, {"name": "PATH 8 · Token Escalation -> BYOVD MSI -> Callback removal -> EDR Blinded", "nodes": ["S0", "A0a", "N0", "T1a", "N0", "N1a", "F_DSE", "N2", "N3d", "G1"], "cost": 12.8, "status": "RIUSCITO"}, {"name": "PATH 7 · [FAIL] BYOVD noto -> WDAC blocklist MS", "nodes": ["S0", "A0a", "N0", "N1a", "F_WDAC"], "cost": 7.0, "status": "FALLIMENTARE"}, {"name": "PATH 6 · [FAIL] DMA fisico -> IOMMU blocca", "nodes": ["S0", "A0a", "N0", "N1n", "F_IOMMU"], "cost": 8.2, "status": "FALLIMENTARE"}, {"name": "PATH 5 · [FAIL] SSDT Hooking -> PatchGuard BSOD", "nodes": ["S0", "A0a", "N0", "N1a", "F_DSE", "N2", "N3b", "F_PG"], "cost": 10.1, "status": "FALLIMENTARE"}];
+
+  // Ordina la lista: PRIMA i percorsi riusciti (costo crescente), POI quelli
+  // falliti (anch'essi costo crescente). Ordinamento difensivo lato client,
+  // cosi' l'elenco resta corretto a prescindere dall'ordine nel file JSON.
+  PATHS.sort(function(a, b) {
+    var aFail = (a.status === 'FALLIMENTARE') ? 1 : 0;
+    var bFail = (b.status === 'FALLIMENTARE') ? 1 : 0;
+    if (aFail !== bFail) return aFail - bFail;
+    var aCost = (a.cost === null || a.cost === undefined) ? Infinity : a.cost;
+    var bCost = (b.cost === null || b.cost === undefined) ? Infinity : b.cost;
+    return aCost - bCost;
+  });
+
+  var originalNodes = null;   // stato originale dei nodi (per il reset)
+  var originalEdges = null;   // stato originale degli archi (per il reset)
+
+  // Cattura lo stato iniziale di nodi e archi appena la rete e' pronta.
+  function captureOriginals() {
+    if (originalNodes || typeof network === 'undefined') return;
+    originalNodes = {};
+    network.body.data.nodes.get().forEach(function(n) {
+      originalNodes[n.id] = {color: n.color, borderWidth: n.borderWidth, opacity: 1};
+    });
+    originalEdges = network.body.data.edges.get();
+  }
+
+  // Ripristina la visualizzazione completa (nessun percorso evidenziato).
+  function resetHighlight() {
+    captureOriginals();
+    var nodeUpdates = network.body.data.nodes.get().map(function(n) {
+      return {id: n.id, opacity: 1, borderWidth: 2};
+    });
+    network.body.data.nodes.update(nodeUpdates);
+    var edgeUpdates = originalEdges.map(function(e) {
+      return {id: e.id, color: e.color, width: e.width, hidden: false};
+    });
+    network.body.data.edges.update(edgeUpdates);
+    document.querySelectorAll('.path-item').forEach(function(el) {
+      el.style.background = '#21262d';
+    });
+  }
+
+  function fitAll() {
+    if (typeof network === 'undefined') return;
+    network.fit({animation: {duration: 450, easingFunction: 'easeInOutQuad'}});
+  }
+
+  function readableView() {
+    if (typeof network === 'undefined') return;
+    var ids = network.body.data.nodes.getIds();
+    if (!ids.length) return;
+    var bounds = network.getBoundingBox(ids[0]);
+    network.moveTo({
+      position: {x: (bounds.left + bounds.right) / 2, y: bounds.top},
+      scale: 0.62,
+      offset: {x: 0, y: 120},
+      animation: {duration: 450, easingFunction: 'easeInOutQuad'}
+    });
+  }
+
+  function toggleCleanView(button) {
+    document.body.classList.toggle('clean-view');
+    var clean = document.body.classList.contains('clean-view');
+    button.textContent = clean ? 'Mostra controlli' : 'Modalità screenshot';
+    setTimeout(fitAll, 80);
+  }
+
+  function exportGraphPng() {
+    if (typeof network === 'undefined') return;
+    var container = document.getElementById('mynetwork');
+    var oldStyle = container.getAttribute('style') || '';
+    var oldPosition = network.getViewPosition();
+    var oldScale = network.getScale();
+    document.body.classList.add('exporting');
+    container.style.width = '3840px';
+    container.style.height = '2160px';
+    network.setSize('3840px', '2160px');
+    network.redraw();
+    network.fit({animation: false});
+    setTimeout(function() {
+      var canvas = container.querySelector('canvas');
+      var link = document.createElement('a');
+      link.download = 'attack_graph_4k.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      container.setAttribute('style', oldStyle);
+      network.setSize('100%', '100vh');
+      network.moveTo({position: oldPosition, scale: oldScale, animation: false});
+      document.body.classList.remove('exporting');
+      network.redraw();
+    }, 300);
+  }
+
+  function togglePathPanel(button) {
+    var content = document.getElementById('path-panel-content');
+    if (!content) return;
+    var collapsed = content.style.display === 'none';
+    content.style.display = collapsed ? 'block' : 'none';
+    button.textContent = collapsed ? '−' : '+';
+    button.setAttribute('aria-label', collapsed ? 'Riduci pannello' : 'Espandi pannello');
+  }
+
+  // Evidenzia il percorso i-esimo: nodi/archi in risalto, resto sfumato.
+  function highlightPath(index) {
+    captureOriginals();
+    var pathNodes = PATHS[index].nodes;
+    var nodeSet = {};
+    pathNodes.forEach(function(id) { nodeSet[id] = true; });
+
+    // Coppie consecutive (arco orientato) appartenenti al percorso.
+    var pairSet = {};
+    for (var i = 0; i < pathNodes.length - 1; i++) {
+      pairSet[pathNodes[i] + '->' + pathNodes[i + 1]] = true;
+    }
+
+    // Nodi: quelli del percorso restano pieni ed evidenziati, gli altri sfumati.
+    var nodeUpdates = network.body.data.nodes.get().map(function(n) {
+      var on = nodeSet[n.id] === true;
+      return {id: n.id, opacity: on ? 1 : 0.12, borderWidth: on ? 5 : 1};
+    });
+    network.body.data.nodes.update(nodeUpdates);
+
+    // Archi: quelli del percorso in oro e piu' spessi, gli altri quasi invisibili.
+    var edgeUpdates = originalEdges.map(function(e) {
+      var on = pairSet[e.from + '->' + e.to] === true;
+      if (on) {
+        return {id: e.id, color: {color: '#ffd700', highlight: '#ffd700'}, width: 5, hidden: false};
+      }
+      return {id: e.id, color: {color: 'rgba(120,120,120,0.10)'}, width: 0.5, hidden: false};
+    });
+    network.body.data.edges.update(edgeUpdates);
+
+    // Inquadra solo il percorso scelto: le etichette restano grandi e leggibili.
+    network.fit({
+      nodes: pathNodes,
+      animation: {duration: 500, easingFunction: 'easeInOutQuad'}
+    });
+
+    // Aggiorna l'evidenziazione nell'elenco laterale.
+    document.querySelectorAll('.path-item').forEach(function(el, idx) {
+      el.style.background = (idx === index) ? '#1f6feb' : '#21262d';
+    });
+  }
+
+  // Costruisce dinamicamente l'elenco cliccabile dei percorsi.
+  function buildPathList() {
+    var container = document.getElementById('path-list');
+    if (!container) return;
+    PATHS.forEach(function(p, idx) {
+      var costTxt = (p.cost === null || p.cost === undefined) ? 'n/d' : Number(p.cost).toFixed(1);
+      var ok = (p.status === 'RIUSCITO');
+      var item = document.createElement('div');
+      item.className = 'path-item';
+      item.style.cssText =
+        'cursor:pointer; padding:7px 8px; margin-bottom:5px; border-radius:6px;' +
+        'background:#21262d; border-left:4px solid ' + (ok ? '#4ade80' : '#f87171') + ';';
+      item.onclick = function() { highlightPath(idx); };
+      item.innerHTML =
+        '<div style="font-weight:600;">' + p.name + '</div>' +
+        '<div style="font-size:11px; color:#8b949e;">Costo ' + costTxt +
+        ' &middot; ' + p.status + '</div>';
+      container.appendChild(item);
+    });
+  }
+
+  // Avvio: attende che la rete vis.js sia disponibile, poi popola il pannello.
+  (function initPanel() {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (typeof network !== 'undefined') {
+        clearInterval(timer);
+        captureOriginals();
+        buildPathList();
+        // Il layout bilanciato ha un rapporto adatto alla vista completa.
+        setTimeout(fitAll, 250);
+      } else if (tries > 100) {
+        clearInterval(timer);
+      }
+    }, 100);
+  })();
+</script>
+
+
+<script type="text/javascript">
+(function installStageBands() {
+  var labels = {"0": "Stage 0: Initial Access", "1": "Stage 1: Escalation → Ring0", "2": "Stage 2: Ring0 + Gates", "3": "Stage 3: Consolidamento", "4": "Stage 4: Obiettivi"};
+  var tries = 0;
+  var timer = setInterval(function() {
+    tries++;
+    if (typeof network === 'undefined') {
+      if (tries > 100) clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    network.on('beforeDrawing', function(ctx) {
+      var grouped = {};
+      network.body.data.nodes.get().forEach(function(node) {
+        var stage = Number(node.stageIndex || 0);
+        if (!grouped[stage]) grouped[stage] = [];
+        grouped[stage].push(node.id);
+      });
+
+      Object.keys(grouped).sort(function(a, b) { return Number(a) - Number(b); })
+        .forEach(function(stage) {
+          var boxes = grouped[stage].map(function(id) { return network.getBoundingBox(id); });
+          if (!boxes.length) return;
+          var left = Math.min.apply(null, boxes.map(function(b) { return b.left; })) - 55;
+          var top = Math.min.apply(null, boxes.map(function(b) { return b.top; })) - 62;
+
+          ctx.save();
+          ctx.fillStyle = '#aeb8c4';
+          ctx.font = "600 24px 'Segoe UI', Arial, sans-serif";
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labels[stage] || ('Stage ' + stage), left + 22, top + 27);
+          ctx.restore();
+        });
+    });
+    network.redraw();
+  }, 100);
+})();
+</script>
+
+</body>
+</html>
